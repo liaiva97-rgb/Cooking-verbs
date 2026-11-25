@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Little Chef 🍳</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Comic Sans MS','Segoe UI',sans-serif;min-height:100vh;display:flex;justify-content:center;
+    background:
+      radial-gradient(circle at 12% 15%,#ffe3ec 0,transparent 42%),
+      radial-gradient(circle at 88% 8%,#dff5ec 0,transparent 45%),
+      radial-gradient(circle at 78% 92%,#fff3d2 0,transparent 42%),
+      linear-gradient(160deg,#fff9f0,#fdeef5)}
+  #app{width:100%;max-width:600px;min-height:100vh;background:rgba(255,253,247,.92);border-radius:30px;
+    padding:24px 16px 44px;text-align:center;box-shadow:0 14px 44px rgba(160,110,80,.22);position:relative;overflow:hidden}
+  h1{font-size:34px;color:#8a5a44}
+  h2{font-size:19px;color:#6b4b39;margin:10px 0 4px}
+  .tip{color:#a3856e;font-size:15px;margin-bottom:8px}
+  .btn{border:none;border-radius:999px;padding:14px 26px;font:700 19px 'Comic Sans MS','Segoe UI',sans-serif;
+    color:#fff;cursor:pointer;margin:8px 6px;box-shadow:0 5px 0 rgba(0,0,0,.14);transition:transform .08s}
+  .btn:active{transform:translateY(4px);box-shadow:none}
+  .menu-btn{width:100%;max-width:380px;font-size:21px;display:flex;align-items:center;gap:14px;text-align:left;
+    border-radius:22px;padding:14px 20px}
+  .menu-btn .em{font-size:36px}
+  .menu-btn .sub{font-size:13px;font-weight:400;opacity:.92;display:block}
+  .p1{background:#ff9eb5}.p2{background:#7ecba8}.p3{background:#f2b26b}.p4{background:#b79ade}
+  .p5{background:#7fb5e8}.p6{background:#ef8fa5}.p7{background:#8fc98f}.p8{background:#e0966f}
+
+  .dots{display:flex;gap:8px;justify-content:center;margin:10px 0 2px;flex-wrap:wrap}
+  .dot{width:14px;height:14px;border-radius:50%;background:#e8ddd0}
+  .dot.done{background:#7ecba8}.dot.cur{background:#ff9eb5;transform:scale(1.25)}
+
+  .ings{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:14px}
+  .ing{width:84px;height:94px;background:#fff;border-radius:18px;font-size:36px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;cursor:grab;touch-action:none;user-select:none;
+    box-shadow:0 5px 12px rgba(160,110,80,.18);border:3px solid transparent;transition:transform .15s}
+  .ing:hover{transform:scale(1.07)}
+  .ing .n{font-size:11px;font-weight:700;color:#7a6455;margin-top:3px}
+  .ing.dragging{opacity:.35}
+  .ing.shake{animation:shake .4s}
+  @keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+  .ing.done{opacity:.3;pointer-events:none}
+  .ghost{position:fixed;z-index:100;pointer-events:none;transform:translate(-50%,-50%) scale(1.3) rotate(-8deg);
+    opacity:.95;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3))}
+  #basket{min-height:120px;border:4px dashed #b79ade;border-radius:24px;margin:14px 0;padding:10px;
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;background:#f6effc;transition:.2s}
+  #basket.over{background:#eadcff;transform:scale(1.02)}
+  .basket-hint{color:#a58ad0;font-weight:700}
+  .basket-ing{font-size:36px;animation:pop .3s}
+  @keyframes pop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1)}}
+  #progress{height:22px;background:#f0e6da;border-radius:11px;overflow:hidden;margin:12px auto;max-width:380px}
+  #fill{height:100%;width:0%;background:linear-gradient(90deg,#7ecba8,#a8d8b9);transition:width .25s}
+
+  .slots{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0}
+  .slot{width:74px;height:84px;background:#fff;border-radius:18px;border:3px dashed #d8c3ae;position:relative;
+    display:flex;align-items:center;justify-content:center;transition:.2s}
+  .slot .num{position:absolute;top:-10px;left:-8px;width:26px;height:26px;border-radius:50%;background:#f2b26b;
+    color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2}
+  .slot.over{background:#fff3d2;transform:scale(1.06)}
+  .slot.wrong{border-color:#ef7676;background:#ffe3e3}
+  .slot.locked{border-style:solid;border-color:#7ecba8}
+  .slot.hintPulse{animation:hintP .45s ease-in-out 3;box-shadow:0 0 0 6px rgba(255,214,120,.85)}
+  .card.hintPulse{animation:hintP .45s ease-in-out 3;box-shadow:0 0 0 6px rgba(255,214,120,.85)}
+  @keyframes hintP{50%{transform:scale(1.12)}}
+  .slot-ic{font-size:36px;animation:pop .3s}
+  .scene-sm{font-size:.62em}
+  .grater-scene{display:inline-flex;align-items:center;gap:.12em;vertical-align:middle}
+  .grater{display:inline-block;width:1.1em;height:1.5em;border-radius:.18em;position:relative;
+    background:linear-gradient(180deg,#e3e8ee,#a3aebb);box-shadow:0 .1em .25em rgba(0,0,0,.28)}
+  .grater:before{content:'';position:absolute;left:12%;right:12%;top:9%;height:44%;
+    background-image:radial-gradient(circle,#8792a0 .055em,transparent .075em);background-size:.26em .28em}
+  .grater:after{content:'';position:absolute;left:14%;right:14%;bottom:8%;height:15%;
+    background:repeating-linear-gradient(90deg,#8792a0 0 .09em,transparent .09em .22em)}
+  .csspot{position:relative;display:inline-block;width:1.5em;height:1.1em;vertical-align:middle}
+  .csspot:before{content:'';position:absolute;left:0;right:0;bottom:0;height:.92em;border-radius:0 0 .5em .5em;
+    background:#7a4a33;border:.05em solid #57331f}
+  .csspot:after{content:'';position:absolute;right:-.2em;bottom:.3em;width:.14em;height:.34em;
+    border:.05em solid #57331f;border-left:none;border-radius:0 .18em .18em 0}
+  .csspot .water{position:absolute;left:.11em;right:.13em;bottom:.09em;height:.6em;
+    border-radius:0 0 .38em .38em;background:linear-gradient(180deg,#a8d8ec,#5aa8d6);overflow:hidden}
+
+  .csspan{position:relative;display:inline-block;width:1.75em;height:1.3em;vertical-align:middle}
+  .csspan:before{content:'';position:absolute;left:0;bottom:.1em;width:1.05em;height:1.05em;border-radius:50%;
+    background:#43434c;border:.06em solid #2c2c33;box-shadow:inset 0 0 0 .12em #5c5c66}
+  .csspan:after{content:'';position:absolute;left:1.08em;bottom:.5em;width:.6em;height:.2em;
+    background:#2c2c33;border-radius:.1em}
+  .csspan .food{position:absolute;left:.16em;bottom:.32em;font-size:.6em;z-index:2}
+
+  .cssonion{display:inline-block;width:.85em;height:.85em;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#f6d9e4,#c488a4);
+    box-shadow:inset -.04em -.06em .12em rgba(90,30,60,.3);position:relative;vertical-align:middle}
+  .cssonion:before{content:'';position:absolute;left:42%;top:-20%;width:.09em;height:.24em;
+    background:#7fbf6f;border-radius:.06em}
+  .cssonion:after{content:'';position:absolute;left:16%;right:16%;top:14%;bottom:10%;
+    border-left:.05em solid rgba(255,255,255,.55);border-right:.05em solid rgba(255,255,255,.55);border-radius:50%}
+  .cssbutter{display:inline-block;width:1.05em;height:.55em;border-radius:.14em;
+    background:linear-gradient(180deg,#fff2a8,#f2ce4e);border:.035em solid #d8ae2c;
+    box-shadow:0 .05em .1em rgba(0,0,0,.15);vertical-align:middle}
+  .cssdough{display:inline-block;width:.92em;height:.92em;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff6e0,#ecd2a4);
+    box-shadow:inset 0 -.08em .12em rgba(160,110,60,.28);vertical-align:middle}
+  .csssalt{display:inline-block;width:.9em;height:.55em;border-radius:.45em .45em .14em .14em;
+    background:linear-gradient(180deg,#fff,#e6ebf0);box-shadow:0 .04em .08em rgba(0,0,0,.14);vertical-align:middle}
+
+  .vrow{display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0}
+  .vrow .ic{font-size:34px}
+  .vslot{min-width:130px;padding:8px 14px;border-radius:14px;border:3px dashed #d8c3ae;background:#fff;
+    font-weight:700;color:#8a5a44;font-size:17px}
+  .vslot.filled{border-style:solid;border-color:#7ecba8;background:#eafaf1;color:#3d8b64}
+  .vslot.wrong{border-color:#ef7676;background:#ffe3e3}
+  .vbank{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+  .vcard{padding:10px 18px;border-radius:999px;background:#ffe9b8;color:#8a5a44;font-weight:700;font-size:17px;
+    cursor:grab;touch-action:none;user-select:none;box-shadow:0 4px 8px rgba(160,110,80,.2);border:3px solid transparent}
+  .vcard.dragging{opacity:.35}
+  .vcard.used{opacity:.25;pointer-events:none}
+
+  .scene{position:relative;height:170px;display:flex;align-items:flex-end;justify-content:center;margin:6px 0}
+  .scene .main{font-size:86px;position:relative;z-index:2;animation:bob 2.2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .steam{position:absolute;bottom:66px;width:12px;height:34px;border-radius:8px;background:rgba(255,255,255,.8);
+    filter:blur(4px);opacity:0;animation:steamUp 2s linear infinite;z-index:1}
+  .steam:nth-of-type(1){margin-left:-40px;animation-delay:.2s}
+  .steam:nth-of-type(2){margin-left:-4px;animation-delay:.9s}
+  .steam:nth-of-type(3){margin-left:32px;animation-delay:.5s}
+  @keyframes steamUp{0%{opacity:0;transform:translateY(0) scaleX(1)}30%{opacity:.9}100%{opacity:0;transform:translateY(-55px) scaleX(1.7)}}
+  .spark{position:absolute;font-size:26px;opacity:0;animation:sparkle 1.3s ease-in-out infinite;z-index:1}
+  .spark:nth-of-type(1){left:24%;bottom:80px;animation-delay:.3s}
+  .spark:nth-of-type(2){right:24%;bottom:86px;animation-delay:.8s}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1.15)}}
+  .bubble{position:absolute;bottom:52px;width:12px;height:12px;border:2px solid rgba(120,200,230,.85);border-radius:50%;
+    opacity:0;animation:bub 1.4s linear infinite;z-index:1}
+  .bubble:nth-of-type(1){margin-left:-34px}.bubble:nth-of-type(2){margin-left:0;animation-delay:.5s}
+  .bubble:nth-of-type(3){margin-left:30px;animation-delay:.9s}
+  @keyframes bub{0%{opacity:0;transform:translateY(0) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-48px) scale(1.2)}}
+
+  .frycol{display:flex;flex-direction:column;align-items:center;position:relative;z-index:2}
+  .pan-food{display:inline-block;transition:filter .4s;cursor:pointer;user-select:none}
+  .pan-food.golden{filter:sepia(.75) saturate(1.7) brightness(1.05)}
+  .pan-food.burnt{filter:sepia(1) saturate(3) brightness(.45)}
+  .pan-food.flipAnim{animation:flipA .5s ease}
+  @keyframes flipA{0%{transform:rotateX(0) scale(1)}50%{transform:rotateX(90deg) scale(1.12)}100%{transform:rotateX(180deg)}}
+  .scene.clickable{cursor:pointer}
+
+  .stir-pad{width:210px;height:210px;margin:0 auto;border-radius:50%;background:radial-gradient(circle,#fff7ea,#ffe9c9);
+    box-shadow:inset 0 0 0 10px #ffe0b2,0 8px 18px rgba(160,110,80,.2);position:relative;touch-action:none;cursor:grab}
+  .stir-pot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px}
+  .spoon{position:absolute;top:8px;left:50%;margin-left:-24px;font-size:44px;transform-origin:50% 97px;transition:transform .05s linear}
+
+  .swipe-zone{width:270px;height:200px;margin:0 auto;border-radius:24px;background:#fff7ea;position:relative;
+    box-shadow:0 8px 18px rgba(160,110,80,.16);overflow:hidden;touch-action:none;cursor:grab;
+    display:flex;align-items:center;justify-content:center}
+  .swipe-item{font-size:76px;position:relative;z-index:2;transition:transform .12s}
+  .tool{position:absolute;font-size:42px;opacity:0;pointer-events:none;z-index:6;transition:opacity .15s;line-height:1}
+  .tool.flip{transform:scaleX(-1)}
+  .slices{position:absolute;bottom:8px;left:0;right:0;display:flex;gap:3px;justify-content:center;z-index:3;flex-wrap:wrap}
+  .piece{font-size:20px;animation:pop .25s}
+  .flash{position:absolute;font-size:38px;opacity:0;pointer-events:none;animation:fl .35s;z-index:4}
+  @keyframes fl{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(1.7)}}
+
+  .shape-zone{position:relative;width:240px;height:240px;margin:0 auto}
+  .dough{position:absolute;left:40px;top:40px;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff7ea,#ffe0b2);
+    box-shadow:0 8px 18px rgba(160,110,80,.25), inset 0 0 0 8px rgba(255,255,255,.45);
+    display:flex;align-items:center;justify-content:center;font-size:64px;transition:font-size .3s}
+  .dough.morph{animation:pop .55s}
+  .pinch{position:absolute;width:38px;height:38px;border-radius:50%;background:#ffd28a;border:3px solid #d8a05a;
+    font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;
+    user-select:none;transition:transform .2s, opacity .25s}
+  .pinch:hover{transform:scale(1.18)}
+  .pinch.done{opacity:0;transform:scale(0);pointer-events:none}
+
+  .timerbar{position:relative;height:26px;background:#f0e6da;border-radius:13px;overflow:hidden;margin:14px auto;max-width:380px}
+  .timerbar .zone{position:absolute;top:0;height:100%;background:rgba(126,203,168,.5);border-left:2px solid #3d8b64;border-right:2px solid #3d8b64}
+  .timerbar .tfill{height:100%;width:0%;background:linear-gradient(90deg,#f2b26b,#ef8fa5)}
+  .holdbtn{padding:20px 34px;font-size:22px;background:#7fb5e8;touch-action:none;user-select:none}
+  .stopbtn{padding:20px 40px;font-size:24px;background:#f4511e;touch-action:none}
+  .msg{min-height:26px;font-size:18px;font-weight:700;color:#8a5a44;margin:8px 0}
+
+  /* ---------- бросок в кастрюлю ---------- */
+  .toss-scene{position:relative;height:260px;margin:8px 0;touch-action:none;overflow:hidden}
+  .toss-item{position:absolute;left:24px;bottom:40px;font-size:60px;cursor:grab;touch-action:none;user-select:none;
+    z-index:3;filter:drop-shadow(0 6px 6px rgba(0,0,0,.18))}
+  .toss-pot{position:absolute;right:20px;bottom:14px;font-size:80px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.18))}
+
+  .catch-zone{position:relative;height:300px;margin:0 auto;max-width:340px;border-radius:24px;overflow:hidden;
+    background:linear-gradient(#fff7ea,#ffeeda);box-shadow:0 8px 18px rgba(160,110,80,.16);touch-action:none;cursor:none}
+  .hearts{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:24px;z-index:7;pointer-events:none}
+  .falling{position:absolute;font-size:44px;transform:translateX(-50%);user-select:none;z-index:2}
+  .plate{position:absolute;bottom:4px;font-size:60px;transform:translateX(-50%);z-index:5;
+    filter:drop-shadow(0 4px 4px rgba(0,0,0,.2))}
+  .catchpop{position:absolute;bottom:64px;font-size:38px;z-index:6;pointer-events:none;
+    animation:catchup .65s forwards}
+  @keyframes catchup{0%{opacity:1;transform:translate(-50%,0) scale(.5)}100%{opacity:0;transform:translate(-50%,-58px) scale(1.35)}}
+
+  .confetti{position:absolute;top:-40px;font-size:28px;animation:fall linear infinite;z-index:5}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+  .stars{font-size:46px;letter-spacing:6px;animation:pop .6s}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+const app = document.getElementById('app');
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const CONFETTI = ['🎉','✨','🌟','🎊','🍓','🥔','🥞','🍪'];
+
+let PH = {down:null, move:null, up:null};
+document.addEventListener('pointerdown', e => { if(PH.down) PH.down(e); });
+document.addEventListener('pointermove', e => { if(PH.move) PH.move(e); });
+document.addEventListener('pointerup',   e => { if(PH.up)   PH.up(e); });
+document.addEventListener('pointercancel', e => { if(PH.up) PH.up(e); });
+function clearPH(){ PH = {down:null,move:null,up:null}; }
+
+/* Нарисованные кодом "эмодзи" — видны на любом устройстве */
+function sym(e){
+  if(e==='ONION')  return '<span class="cssonion"></span>';
+  if(e==='BUTTER') return '<span class="cssbutter"></span>';
+  if(e==='DOUGH')  return '<span class="cssdough"></span>';
+  if(e==='SALT')   return '<span class="csssalt"></span>';
+  return e;
+}
+
+/* GRATER (тёрка), POT (кастрюля с водой), FRYPAN:x (сковородка с едой) */
+function sceneHTML(s){
+  if(s === 'GRATER') return '<span class="grater-scene"><span>🥔</span><span class="grater"></span></span>';
+  if(s === 'POT')    return '<span class="csspot"><span class="water"></span></span>';
+  if(s.startsWith('FRYPAN:'))
+    return `<span class="csspan"><span class="food">${sym(s.slice(7))}</span></span>`;
+  const raw = s;
+  const html = s.replace(/ONION|BUTTER|DOUGH|SALT/g, m => sym(m));
+  return `<span class="${raw.length > 2 ? 'scene-sm' : ''}">${html}</span>`;
+}
+
+const DISHES = [
+ {id:'draniki', name:'Draniki', emoji:'🥔', result:'🥞', hint:'Potato pancakes from Belarus', c:'p1',
+  correct:[['potato','🥔'],['onion','ONION'],['egg','🥚'],['flour','🌾'],['salt','SALT']],
+  wrong:[['chocolate','🍫'],['candy','🍭'],['banana','🍌'],['soda','🍹']],
+  extra:['wash','bake','knead','blend'],
+  steps:[
+   {verb:'peel',    scene:'🥔✋',        game:'swipe', tool:'✋', n:4, piece:'🥔'},
+   {verb:'grate',   scene:'GRATER',      game:'swipe', tool:'🌀', n:6, spark:true},
+   {verb:'chop',    scene:'ONION🔪',     game:'swipe', tool:'🔪', n:5, piece:'ONION'},
+   {verb:'mix',     scene:'🍜',          game:'stir',  turns:2},
+   {verb:'fry',     scene:'FRYPAN:🥞',   game:'flip',  item:'🥞'},
+   {verb:'top',     scene:'🍶',          game:'swipe', tool:'🥄', n:2, spark:true},
+   {verb:'serve',   scene:'🍽️',        game:'catch', item:'🥞'}]},
+
+ {id:'machanka', name:'Machanka', emoji:'🥘', hint:'Meat stew with mushrooms', c:'p2',
+  correct:[['pork','🥓'],['onion','ONION'],['mushrooms','🍄'],['sour cream','🍶'],['flour','🌾'],['salt','SALT']],
+  wrong:[['ice cream','🍨'],['apple','🍎'],['candy','🍭'],['juice','🍹']],
+  extra:['peel','bake','whisk','mash'],
+  steps:[
+   {verb:'chop',    scene:'ONION🔪',    game:'swipe', tool:'🔪', n:4, piece:'ONION'},
+   {verb:'fry',     scene:'FRYPAN:🥓',  game:'flip',  item:'🥓'},
+   {verb:'add',     scene:'🍄🍲',       game:'toss',  item:'🍄', target:'🍲'},
+   {verb:'sprinkle',scene:'🌾🥄',       game:'swipe', tool:'🥄', n:3, spark:true},
+   {verb:'pour',    scene:'🍶',         game:'pour',  speed:1.4},
+   {verb:'simmer',  scene:'🍲',         game:'stir',  turns:2},
+   {verb:'serve',   scene:'🍽️',        game:'catch', item:'🍲'}]},
+
+ {id:'kletski', name:'Kletski', emoji:'🥟', hint:'Potato dumplings', c:'p3',
+  correct:[['potato','🥔'],['flour','🌾'],['egg','🥚'],['butter','BUTTER'],['dill','🌿'],['salt','SALT']],
+  wrong:[['chocolate','🍫'],['tomato','🍅'],['candy','🍭'],['sausage','🌭']],
+  extra:['fry','whisk','mash','wash'],
+  steps:[
+   {verb:'peel',  scene:'🥔✋',       game:'swipe', tool:'✋', n:4, piece:'🥔'},
+   {verb:'grate', scene:'GRATER',     game:'swipe', tool:'🌀', n:6, spark:true},
+   {verb:'mix',   scene:'🍜',         game:'stir',  turns:2},
+   {verb:'shape', scene:'DOUGH👆',    game:'shape', item:'DOUGH', target:'🥟'},
+   {verb:'boil',  scene:'POT',        game:'stir',  turns:2},
+   {verb:'pour',  scene:'BUTTER',     game:'pour',  speed:1.3},
+   {verb:'serve', scene:'🍽️',        game:'catch', item:'🥟'}]},
+
+ {id:'syrniki', name:'Syrniki', emoji:'🧀', hint:'Cheese pancakes', c:'p4',
+  correct:[['cheese','🧀'],['egg','🥚'],['flour','🌾'],['sugar','🍬'],['berries','🍒'],['sour cream','🍶']],
+  wrong:[['fish','🐟'],['sausage','🌭'],['soda','🍹'],['fries','🍟']],
+  extra:['peel','bake','blend','wash'],
+  steps:[
+   {verb:'mash',  scene:'🧀🍜🥄',     game:'swipe', tool:'🥄', n:5, flash:'🧀'},
+   {verb:'mix',   scene:'🍜',         game:'stir',  turns:2},
+   {verb:'shape', scene:'DOUGH👆',    game:'shape', item:'DOUGH', target:'🥞'},
+   {verb:'fry',   scene:'FRYPAN:🥞',  game:'flip',  item:'🥞'},
+   {verb:'top',   scene:'🍒🥄',       game:'swipe', tool:'🥄', n:3, spark:true},
+   {verb:'serve', scene:'🍽️',        game:'catch', item:'🥞'}]},
+
+ {id:'kholodnik', name:'Kholodnik', emoji:'🍲', hint:'Cold beet soup', c:'p5',
+  correct:[['beets','🍠'],['cucumber','🥒'],['eggs','🥚'],['kefir','🥛'],['dill','🌿'],['salt','SALT']],
+  wrong:[['candy','🍭'],['fries','🍟'],['burger','🍔'],['coffee','☕']],
+  extra:['fry','knead','bake','mash'],
+  steps:[
+   {verb:'boil',    scene:'POT',     game:'stir',  turns:2},
+   {verb:'peel',    scene:'🍠✋',    game:'swipe', tool:'✋', n:4, piece:'🍠'},
+   {verb:'chop',    scene:'🥒🔪',    game:'swipe', tool:'🔪', n:5, piece:'🥒'},
+   {verb:'slice',   scene:'🥚🔪',    game:'swipe', tool:'🔪', n:4, piece:'🥚'},
+   {verb:'pour',    scene:'🥛',      game:'pour',  speed:1.4},
+   {verb:'mix',     scene:'🍜',      game:'stir',  turns:2},
+   {verb:'sprinkle',scene:'🌿🥄',    game:'swipe', tool:'🥄', n:2, spark:true},
+   {verb:'serve',   scene:'🍽️',     game:'catch', item:'🍲'}]},
+
+ {id:'pancakes', name:'Pancakes', emoji:'🥞', hint:'Sweet breakfast pancakes', c:'p6',
+  correct:[['milk','🥛'],['egg','🥚'],['flour','🌾'],['sugar','🍬'],['butter','BUTTER'],['berries','🍒']],
+  wrong:[['fish','🐟'],['candy','🍭'],['tomato','🍅'],['coffee','☕']],
+  extra:['peel','wash','grate','knead'],
+  steps:[
+   {verb:'mix',   scene:'🍜',         game:'stir', turns:2},
+   {verb:'pour',  scene:'🥛',         game:'pour', speed:1.5},
+   {verb:'fry',   scene:'FRYPAN:🥞',  game:'flip', item:'🥞'},
+   {verb:'top',   scene:'🍒🥄',       game:'swipe', tool:'🥄', n:3, spark:true},
+   {verb:'serve', scene:'🍽️',        game:'catch', item:'🥞'}]},
+
+ {id:'fruit', name:'Fruit Salad', emoji:'🍓', hint:'Sweet fruit mix', c:'p7',
+  correct:[['apple','🍎'],['banana','🍌'],['strawberry','🍓'],['orange','🍊'],['yogurt','🍶'],['honey','🍯']],
+  wrong:[['sausage','🌭'],['potato','🥔'],['onion','ONION'],['chocolate','🍫']],
+  extra:['fry','bake','grate','pour'],
+  steps:[
+   {verb:'wash',  scene:'🍓💦',   game:'swipe', tool:'💦', n:5, flash:'💧', bubbles:true},
+   {verb:'peel',  scene:'🍌✋',   game:'swipe', tool:'✋', n:4, piece:'🍌'},
+   {verb:'chop',  scene:'🍎🔪',   game:'swipe', tool:'🔪', n:6, piece:'🍎'},
+   {verb:'mix',   scene:'🍜',     game:'stir',  turns:2},
+   {verb:'top',   scene:'🍯🥄',   game:'swipe', tool:'🥄', n:2, spark:true},
+   {verb:'serve', scene:'🍽️',    game:'catch', item:'🍓'}]},
+
+ {id:'cookies', name:'Cookies', emoji:'🍪', hint:'Chocolate chip cookies', c:'p8',
+  correct:[['flour','🌾'],['sugar','🍬'],['butter','BUTTER'],['egg','🥚'],['chocolate','🍫'],['milk','🥛']],
+  wrong:[['fish','🐟'],['tomato','🍅'],['sausage','🌭'],['cheese','🧀']],
+  extra:['fry','peel','wash','grate'],
+  steps:[
+   {verb:'mix',     scene:'🍜',      game:'stir',  turns:2},
+   {verb:'knead',   scene:'DOUGH✊', game:'swipe', tool:'✊', n:4, flash:'✨'},
+   {verb:'shape',   scene:'🍪👆',    game:'shape', item:'DOUGH', target:'🍪'},
+   {verb:'bake',    scene:'🔥',      game:'hold'},
+   {verb:'sprinkle',scene:'🍫🥄',    game:'swipe', tool:'🥄', n:3, spark:true},
+   {verb:'serve',   scene:'🍽️',     game:'catch', item:'🍪'}]}
+];
+
+let dish = null, errors = 0;
+
+/* ---------- Мини-игры ---------- */
+
+function gameStir(zone, turns, center, onDone){
+  zone.innerHTML = `<div class="stir-pad" id="pad">
+      <div class="stir-pot">${sceneHTML(center)}</div>
+      <div class="spoon" id="spoon">🥄</div></div>
+    <div class="timerbar"><div class="tfill" id="tfill"></div></div>`;
+  const pad = document.getElementById('pad'), spoon = document.getElementById('spoon'),
+        tfill = document.getElementById('tfill');
+  let down=false, lastAng=null, total=0, active=true;
+  const ang = e => { const r = pad.getBoundingClientRect();
+    return Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2)); };
+  PH.down = e => { const r = pad.getBoundingClientRect();
+    if(e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom){ down=true; lastAng=ang(e); } };
+  PH.move = e => { if(!down || !active) return;
+    const a = ang(e); let d = a - lastAng;
+    if(d > Math.PI) d -= 2*Math.PI; if(d < -Math.PI) d += 2*Math.PI;
+    total += Math.abs(d); lastAng = a;
+    spoon.style.transform = `rotate(${total}rad)`;
+    const p = Math.min(100, total/(turns*2*Math.PI)*100);
+    tfill.style.width = p+'%';
+    if(p>=100){ active=false; clearPH(); setTimeout(onDone, 500); } };
+  PH.up = () => { down=false; lastAng=null; };
+}
+
+function gameSwipe(zone, need, item, opts, onDone){
+  zone.innerHTML = `<div class="swipe-zone" id="sz">
+      ${opts&&opts.bubbles?'<span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>':''}
+      ${opts&&opts.spark?'<span class="spark">✨</span><span class="spark">✨</span>':''}
+      <div class="swipe-item" id="it">${sceneHTML(item)}</div>
+      <div class="slices" id="sl"></div>
+      <div class="tool${opts&&opts.tool==='🔪'?' flip':''}" id="tl">${(opts&&opts.tool)||'🔪'}</div></div>
+    <div class="timerbar"><div class="tfill" id="tfill"></div></div>`;
+  const sz = document.getElementById('sz'), sl = document.getElementById('sl'),
+        tfill = document.getElementById('tfill'), it = document.getElementById('it'),
+        tl = document.getElementById('tl');
+  let pressed=false, lx=null, ly=null, acc=0, count=0, active=true;
+  const inside = e => { const r = sz.getBoundingClientRect();
+    return e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom; };
+  const moveTool = e => { const r = sz.getBoundingClientRect();
+    tl.style.left = (e.clientX-r.left-21)+'px';
+    tl.style.top  = (e.clientY-r.top-42)+'px'; };
+  const act = e => {
+    count++;
+    tfill.style.width = (count/need*100)+'%';
+    it.style.transform = 'scale(.9)'; setTimeout(()=>{ it.style.transform=''; }, 130);
+    const r = sz.getBoundingClientRect();
+    const f = document.createElement('span');
+    f.className='flash';
+    f.innerHTML = (opts&&opts.spark) ? '✨' : sym((opts&&opts.piece) || (opts&&opts.flash) || '✨');
+    f.style.left = (e.clientX-r.left-19)+'px';
+    f.style.top  = (e.clientY-r.top-19)+'px';
+    sz.appendChild(f); setTimeout(()=>f.remove(), 380);
+    if(opts && opts.piece) sl.insertAdjacentHTML('beforeend', `<span class="piece">${sym(opts.piece)}</span>`);
+    if(count>=need && active){ active=false; clearPH(); setTimeout(onDone, 500); } };
+  PH.down = e => { if(!inside(e) || !active) return; e.preventDefault();
+    pressed=true; lx=e.clientX; ly=e.clientY; acc=0;
+    tl.style.opacity=1; moveTool(e); };
+  PH.move = e => { if(!pressed || !active) return;
+    moveTool(e);
+    acc += Math.hypot(e.clientX-lx, e.clientY-ly);
+    lx=e.clientX; ly=e.clientY;
+    if(acc >= 70){ acc = 0; act(e); } };
+  PH.up = () => { pressed=false; tl.style.opacity=0; };
+}
+
+function gamePour(zone, emoji, speed, onDone, fail){
+  zone.innerHTML = `<div class="scene"><div class="main">${sym(emoji)}</div><span class="spark">💧</span><span class="spark">💧</span></div>
+    <div class="timerbar"><div class="zone" style="left:65%;width:25%"></div><div class="tfill" id="tfill"></div></div>
+    <button class="btn stopbtn" id="sb">STOP! ✋</button>`;
+  const tfill = document.getElementById('tfill'), btn = document.getElementById('sb');
+  let fill = 0, active = true, raf;
+  const retry = m => { fail(m); setTimeout(()=>{ fill=0; tfill.style.width='0%'; active=true; raf=requestAnimationFrame(loop); }, 900); };
+  function loop(){ if(!active) return;
+    fill = Math.min(100, fill + (speed||1.4));
+    tfill.style.width = fill+'%';
+    if(fill >= 100){ active=false; retry('💦 Too much! It spilled! Try again!'); return; }
+    raf = requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  btn.onclick = () => { if(!active) return;
+    active = false; cancelAnimationFrame(raf);
+    if(fill >= 65 && fill <= 90){ clearPH(); setTimeout(onDone, 400); }
+    else if(fill < 65) retry('⏳ Not enough! Try again!');
+    else retry('💦 Too much! It spilled! Try again!'); };
+}
+
+function gameHold(zone, emoji, onDone, fail){
+  zone.innerHTML = `<div class="scene"><div class="main">${sym(emoji)}</div><span class="steam"></span><span class="steam"></span></div>
+    <div class="timerbar"><div class="zone" style="left:65%;width:25%"></div><div class="tfill" id="tfill"></div></div>
+    <button class="btn holdbtn" id="hb">PRESS & HOLD! 👆</button>`;
+  const tfill = document.getElementById('tfill'), btn = document.getElementById('hb');
+  let filling=false, fill=0, raf=null, active=true;
+  function loop(){ if(!active) return;
+    if(filling){ fill = Math.min(100, fill+1.6); tfill.style.width = fill+'%'; }
+    raf = requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); filling = true; });
+  PH.up = () => { if(!filling || !active) return; filling = false;
+    if(fill>=65 && fill<=90){ active=false; cancelAnimationFrame(raf); clearPH(); setTimeout(onDone, 400); }
+    else if(fill<65){ fail('Not enough! Try again!'); fill=0; tfill.style.width='0%'; }
+    else { fail('Too much! Try again!'); fill=0; tfill.style.width='0%'; } };
+}
+
+/* Жарка: продукт на рисованной сковородке, тап — переворот */
+function gameFlip(zone, item, onDone, fail){
+  zone.innerHTML = `<div class="scene clickable" id="sc">
+      <div class="frycol">
+        <div class="main" style="font-size:110px">
+          <span class="csspan"><span class="food pan-food" id="panItem">${sym(item)}</span></span>
+        </div>
+      </div>
+      <span class="steam"></span><span class="steam"></span></div>
+    <div class="timerbar"><div class="zone" id="fzone" style="left:35%;width:30%"></div><div class="tfill" id="tfill"></div></div>
+    <div class="msg" id="gmsg">Wait for the golden color. Then tap the food! 👆</div>`;
+  const it = document.getElementById('panItem'), gm = document.getElementById('gmsg'),
+        tfill = document.getElementById('tfill'), sc = document.getElementById('sc');
+  let side = 1, t0 = 0, goldenAt = 0, burntAt = 0, busy = false, done = false;
+  function startSide(){
+    t0 = performance.now();
+    goldenAt = 1800 + Math.random()*900;
+    burntAt = goldenAt + 3200;
+    it.classList.remove('golden','burnt');
+    tfill.style.width = '0%';
+    const z = document.getElementById('fzone');
+    z.style.left = (goldenAt/burntAt*100)+'%';
+    z.style.width = ((burntAt-goldenAt)/burntAt*100*0.75)+'%';
+    requestAnimationFrame(loop);
+  }
+  function loop(now){
+    if(done || busy) return;
+    const t = now - t0;
+    if(t >= goldenAt) it.classList.add('golden');
+    tfill.style.width = Math.min(100, t/burntAt*100)+'%';
+    if(t >= burntAt){
+      it.classList.add('burnt');
+      fail('🔥 Too late! It burnt! Try again!');
+      busy = true;
+      setTimeout(()=>{ busy = false; startSide(); }, 800);
+      return;
+    }
+    requestAnimationFrame(loop);
+  }
+  startSide();
+  PH.down = e => {
+    if(done || busy) return;
+    const r = sc.getBoundingClientRect();
+    if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+    const t = performance.now() - t0;
+    if(t < goldenAt){ fail('⏳ Not ready yet! Wait!'); return; }
+    busy = true;
+    it.classList.remove('golden');
+    it.classList.add('flipAnim');
+    setTimeout(()=>{
+      it.classList.remove('flipAnim');
+      if(side === 1){
+        side = 2;
+        gm.textContent = 'Good flip! Now cook the other side! 🔄';
+        busy = false;
+        startSide();
+      } else {
+        done = true;
+        clearPH();
+        setTimeout(onDone, 250);
+      }
+    }, 500);
+  };
+}
+
+function gameShape(zone, item, target, onDone){
+  zone.innerHTML = `<div class="shape-zone" id="shz">
+      <div class="dough" id="dough">${sym(item)}</div>
+      <div class="pinch" style="left:101px;top:6px">👆</div>
+      <div class="pinch" style="left:196px;top:101px">👆</div>
+      <div class="pinch" style="left:101px;top:196px">👆</div>
+      <div class="pinch" style="left:6px;top:101px">👆</div></div>
+    <div class="timerbar"><div class="tfill" id="tfill"></div></div>
+    <div class="msg">Tap every corner to shape it! 👆</div>`;
+  const need = 4; let count = 0;
+  PH.down = e => { const dot = e.target.closest ? e.target.closest('.pinch') : null;
+    if(!dot || dot.classList.contains('done')) return;
+    dot.classList.add('done'); count++;
+    document.getElementById('tfill').style.width = (count/need*100)+'%';
+    if(count >= need){
+      const d = document.getElementById('dough');
+      d.textContent = target; d.style.fontSize = '84px'; d.classList.add('morph');
+      clearPH(); setTimeout(onDone, 800); } };
+}
+
+/* БРОСОК: схватить ингредиент и швырнуть его в кастрюлю */
+function gameToss(zone, item, target, onDone){
+  zone.innerHTML = `<div class="toss-scene" id="ts">
+      <div class="toss-pot" id="tp">${sym(target)}</div>
+      <div class="toss-item" id="ti">${sym(item)}</div></div>
+    <div class="msg" id="gmsg">Grab it and THROW it into the pot! 💨</div>`;
+  const ts = document.getElementById('ts'), ti = document.getElementById('ti'),
+        tp = document.getElementById('tp'), gm = document.getElementById('gmsg');
+  let dragging = false, lastX = 0, lastY = 0, lastT = 0, vx = 0, vy = 0,
+      flying = false, active = true;
+  const setPos = (x, y) => { ti.style.left = x+'px'; ti.style.top = y+'px'; ti.style.bottom = 'auto'; };
+  const itemCenter = () => { const r = ti.getBoundingClientRect();
+    return {x: r.left + r.width/2, y: r.top + r.height/2}; };
+  const potRect = () => { const r = tp.getBoundingClientRect();
+    return {l: r.left, r: r.right, t: r.top + r.height*0.2, b: r.bottom}; };
+  PH.down = e => {
+    if(flying || !active) return;
+    if(!e.target.closest || !e.target.closest('#ti')) return;
+    e.preventDefault();
+    dragging = true;
+    const ir = ti.getBoundingClientRect(), r = ts.getBoundingClientRect();
+    setPos(ir.left - r.left, ir.top - r.top);
+    lastX = e.clientX; lastY = e.clientY; lastT = performance.now();
+    vx = 0; vy = 0;
+    gm.textContent = 'Now THROW it into the pot! 💨';
+  };
+  PH.move = e => {
+    if(!dragging) return;
+    const now = performance.now(), dt = Math.max(8, now - lastT);
+    vx = (e.clientX - lastX)/dt*16;
+    vy = (e.clientY - lastY)/dt*16;
+    lastX = e.clientX; lastY = e.clientY; lastT = now;
+    const r = ts.getBoundingClientRect();
+    const x = Math.max(-20, Math.min(r.width-70, e.clientX - r.left - 30));
+    const y = Math.max(-20, Math.min(r.height-70, e.clientY - r.top - 30));
+    setPos(x, y);
+  };
+  PH.up = () => {
+    if(!dragging) return;
+    dragging = false;
+    if(!active) return;
+    flying = true;
+    let px = parseFloat(ti.style.left) || 24, py = parseFloat(ti.style.top) || 0;
+    let fx = vx, fy = vy;
+    if(Math.hypot(fx, fy) < 6){ fx = 0; fy = 0; }
+    const g = 0.55;
+    function step(){
+      if(!flying) return;
+      fy += g;
+      px += fx; py += fy;
+      setPos(px, py);
+      const c = itemCenter(), p = potRect();
+      if(c.x > p.l && c.x < p.r && c.y > p.t && c.y < p.b){
+        flying = false; active = false;
+        ti.style.transition = 'transform .25s, opacity .25s';
+        ti.style.transform = 'scale(.2)'; ti.style.opacity = '0';
+        gm.textContent = '✨ It landed in the pot!';
+        clearPH();
+        setTimeout(onDone, 550);
+        return;
+      }
+      const r = ts.getBoundingClientRect();
+      if(py > r.height - 10 || px < -80 || px > r.width + 40){
+        flying = false;
+        gm.textContent = 'Missed! Grab it and throw again!';
+        ti.style.transition = 'left .45s, top .45s, opacity .3s';
+        ti.style.opacity = '0.25';
+        setTimeout(() => {
+          ti.style.transition = 'opacity .3s';
+          ti.style.opacity = '1';
+          setPos(24, r.height - 90);
+        }, 420);
+        return;
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  };
+}
+
+function gameCatch(zone, item, onDone){
+  const need = 3;
+  zone.innerHTML = `<div class="catch-zone" id="cz">
+      <div class="hearts" id="hearts"></div>
+      <div class="plate" id="pl">🍽️</div></div>
+    <div class="timerbar"><div class="tfill" id="tfill"></div></div>
+    <div class="msg" id="gmsg"></div>`;
+  const cz = document.getElementById('cz'), pl = document.getElementById('pl'),
+        tfill = document.getElementById('tfill'), gmsg = document.getElementById('gmsg');
+  gmsg.innerHTML = `Catch ${sym(item)} 3 times! ⬅️➡️`;
+  const DECOYS = ['🍎','🍌','🍓','🍇','🍉','🥕','🍄','🐟','🧀','🍩','🍬','🍞'].filter(x=>x!==item && x!==dish.emoji);
+  let plateX = 170, items = [], caught = 0, lives = 3, lastSpawn = 0, active = true;
+  const hearts = document.getElementById('hearts');
+  const updHearts = () => { hearts.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3-lives); };
+  updHearts();
+  function popEmoji(e, x){
+    const pop = document.createElement('span');
+    pop.className = 'catchpop'; pop.innerHTML = sym(e);
+    pop.style.left = x+'px';
+    cz.appendChild(pop); setTimeout(()=>pop.remove(), 680);
+  }
+  function spawn(now){
+    if(items.length >= 4) return;
+    const r = cz.getBoundingClientRect();
+    const correct = Math.random() < 0.3;
+    const e = correct ? item : DECOYS[Math.floor(Math.random()*DECOYS.length)];
+    const el = document.createElement('span');
+    el.className = 'falling'; el.innerHTML = sym(e);
+    const x = 40 + Math.random()*(r.width-80);
+    el.style.left = x+'px'; el.style.top = '-40px';
+    cz.appendChild(el);
+    items.push({el, x, y:-40, v: 2.2+Math.random()*1.6, correct, emoji:e, done:false});
+  }
+  function loop(now){
+    if(!active) return;
+    if(now - lastSpawn > 620){ lastSpawn = now; spawn(now); }
+    const r = cz.getBoundingClientRect();
+    const catchY = r.height - 70;
+    items.forEach(it => {
+      if(it.done) return;
+      it.y += it.v; it.el.style.top = it.y+'px';
+      if(it.y >= catchY){
+        it.done = true;
+        if(Math.abs(it.x - plateX) < 60){
+          if(it.correct){
+            caught++;
+            tfill.style.width = (caught/need*100)+'%';
+            popEmoji(item, plateX);
+            gmsg.textContent = caught>=need ? '' : `✨ Caught ${caught} of ${need}!`;
+            if(caught >= need){ active = false; setTimeout(()=>{ clearPH(); onDone(); }, 450); }
+          } else {
+            errors++; lives--;
+            updHearts();
+            popEmoji(it.emoji, plateX);
+            gmsg.textContent = `Oops! ${it.emoji} is not your dish!`;
+            if(lives <= 0){
+              lives = 3; caught = 0;
+              tfill.style.width = '0%';
+              updHearts();
+              gmsg.textContent = 'Out of hearts! Start again! 🔄';
+            }
+          }
+          setTimeout(()=>{ it.el.remove(); items = items.filter(x=>x!==it); }, 250);
+        } else {
+          setTimeout(()=>{ it.el.remove(); items = items.filter(x=>x!==it); }, 250);
+        }
+      }
+    });
+    items = items.filter(it => it.y < r.height);
+    requestAnimationFrame(loop);
+  }
+  const setPlate = e => { const r = cz.getBoundingClientRect();
+    plateX = Math.max(40, Math.min(r.width-40, e.clientX - r.left));
+    pl.style.left = plateX+'px'; };
+  PH.move = setPlate;
+  PH.down = setPlate;
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Меню ---------- */
+function showMenu(){
+  clearPH();
+  app.innerHTML = `<h1>🍳 Little Chef</h1>
+    <h2>Pick a recipe and cook it yourself!</h2>
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:16px">
+      ${DISHES.map(d=>`<button class="btn menu-btn ${d.c}" data-d="${d.id}">
+        <span class="em">${d.emoji}</span>
+        <span><span style="display:block">${d.name}</span><span class="sub">${d.hint}</span></span></button>`).join('')}
+    </div>`;
+  app.querySelectorAll('[data-d]').forEach(b => b.onclick = () => {
+    dish = DISHES.find(d => d.id === b.dataset.d); errors = 0; showIngredients();
+  });
+}
+
+/* ---------- Этап 1: ингредиенты ---------- */
+function showIngredients(){
+  clearPH();
+  const items = shuffle(dish.correct.map(c=>({name:c[0],emoji:c[1],ok:true}))
+    .concat(dish.wrong.map(w=>({name:w[0],emoji:w[1],ok:false}))));
+  const need = dish.correct.length;
+  app.innerHTML = `<h1>${dish.emoji} ${dish.name}</h1>
+    <h2>Drag the right food into the basket!</h2>
+    <div id="progress"><div id="fill"></div></div>
+    <div id="basket"><span class="basket-hint">Drop food here 🛍️</span></div>
+    <div class="ings">${items.map(it=>`<div class="ing" data-name="${it.name}" data-emoji="${it.emoji}" data-ok="${it.ok?1:0}">${sym(it.emoji)}<span class="n">${it.name}</span></div>`).join('')}</div>
+    <div class="msg" id="msg"></div>
+    <button class="btn p4" id="cookBtn" style="display:none">Next: build the recipe! 📜</button>`;
+  let placed = 0;
+  const basket = document.getElementById('basket'), fill = document.getElementById('fill'),
+        msg = document.getElementById('msg'), cookBtn = document.getElementById('cookBtn');
+  let ghost=null, src=null;
+  const moveG = e => { if(!ghost) return;
+    ghost.style.left = e.clientX+'px'; ghost.style.top = e.clientY+'px';
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const b = el && el.closest ? el.closest('#basket') : null;
+    basket.classList.toggle('over', !!b); };
+  PH.down = e => { const el = e.target.closest ? e.target.closest('.ing') : null;
+    if(!el || el.classList.contains('done')) return;
+    e.preventDefault(); src = el;
+    ghost = el.cloneNode(true); ghost.classList.add('ghost');
+    ghost.style.position='fixed'; ghost.style.width='84px'; document.body.appendChild(ghost); moveG(e);
+    el.classList.add('dragging'); };
+  PH.move = moveG;
+  PH.up = e => { if(!ghost) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const over = el && el.closest && el.closest('#basket');
+    ghost.remove(); ghost=null; src.classList.remove('dragging');
+    basket.classList.remove('over');
+    if(over){
+      if(src.dataset.ok==='1'){
+        src.classList.add('done'); placed++;
+        basket.insertAdjacentHTML('beforeend', `<span class="basket-ing">${sym(src.dataset.emoji)}</span>`);
+        fill.style.width = (placed/need*100)+'%';
+        msg.textContent = `✅ ${src.dataset.name} added! (${placed} of ${need})`;
+        if(placed===need){ msg.textContent = 'All ingredients are ready! 🎉'; cookBtn.style.display='inline-block'; }
+      } else {
+        errors++;
+        src.classList.remove('shake'); void src.offsetWidth; src.classList.add('shake');
+        msg.textContent = `❌ ${src.dataset.name} is not for ${dish.name}!`;
+      }
+    }
+    src = null; };
+  cookBtn.onclick = showOrder;
+}
+
+/* ---------- Этап 2: порядок рецепта ---------- */
+function showOrder(){
+  clearPH();
+  const N = dish.steps.length;
+  const tray = shuffle(dish.steps.map((s,i)=>({i, scene:s.scene})));
+  const slots = Array(N).fill(null);
+  function render(){
+    app.innerHTML = `<h1>${dish.emoji} ${dish.name}</h1>
+      <h2>1️⃣ Put the recipe in order!</h2>
+      <p class="tip">Drag the pictures into the slots. Not sure? Use 💡!</p>
+      <div class="slots" id="slots">${slots.map((s,i)=>`<div class="slot ${s!==null?'locked':''}" data-slot="${i}"><span class="num">${i+1}</span>${s!==null?`<span class="slot-ic">${sceneHTML(dish.steps[s].scene)}</span>`:''}</div>`).join('')}</div>
+      <div class="msg" id="msg"></div>
+      <div class="ings" id="tray">${tray.filter(c=>!slots.includes(c.i)).map(c=>`<div class="ing card" data-idx="${c.i}"><span class="slot-ic">${sceneHTML(c.scene)}</span></div>`).join('')}</div>
+      <button class="btn p5" id="hintBtn">💡 Hint</button>`;
+    document.getElementById('hintBtn').onclick = () => {
+      const i = slots.findIndex(s=>s===null);
+      if(i < 0) return;
+      const slotEl = document.querySelector(`.slot[data-slot="${i}"]`);
+      const cardEl = document.querySelector(`.card[data-idx="${i}"]`);
+      if(slotEl) slotEl.classList.add('hintPulse');
+      if(cardEl) cardEl.classList.add('hintPulse');
+      setTimeout(()=>{ if(slotEl) slotEl.classList.remove('hintPulse');
+        if(cardEl) cardEl.classList.remove('hintPulse'); }, 1500);
+    };
+  }
+  render();
+  let ghost=null, dragIdx=null;
+  const moveG = e => { if(!ghost) return;
+    ghost.style.left = e.clientX+'px'; ghost.style.top = e.clientY+'px';
+    document.querySelectorAll('.slot').forEach(s=>s.classList.remove('over'));
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const t = el && el.closest ? el.closest('.slot') : null;
+    if(t && slots[+t.dataset.slot]===null) t.classList.add('over'); };
+  PH.down = e => { const el = e.target.closest ? e.target.closest('.card') : null;
+    if(!el) return; e.preventDefault(); dragIdx = +el.dataset.idx;
+    ghost = el.cloneNode(true); ghost.classList.add('ghost');
+    ghost.style.position='fixed'; ghost.style.width='84px'; document.body.appendChild(ghost); moveG(e); };
+  PH.move = moveG;
+  PH.up = e => { if(!ghost) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const t = el && el.closest ? el.closest('.slot') : null;
+    ghost.remove(); ghost=null;
+    document.querySelectorAll('.slot').forEach(s=>s.classList.remove('over'));
+    if(t && slots[+t.dataset.slot]===null){ slots[+t.dataset.slot] = dragIdx; render(); check(); }
+    dragIdx = null; };
+  app.addEventListener('click', e => {
+    const s = e.target.closest ? e.target.closest('.slot') : null;
+    if(s && slots[+s.dataset.slot]!==null){ slots[+s.dataset.slot] = null; render(); } });
+  function check(){
+    if(slots.some(s=>s===null)) return;
+    if(slots.every((v,i)=>v===i)){
+      document.getElementById('msg').textContent = '✨ Good order! Now add the verbs!';
+      setTimeout(showVerbs, 1000);
+    } else {
+      errors++;
+      document.getElementById('msg').textContent = '🤔 Some steps are wrong. Try again!';
+      document.querySelectorAll('.slot').forEach((s,i)=>{ if(slots[i]!==i) s.classList.add('wrong'); });
+      setTimeout(()=>{ slots.forEach((v,i)=>{ if(v!==i) slots[i]=null; }); render(); }, 1100);
+    }
+  }
+}
+
+/* ---------- Этап 3: вставить глаголы ---------- */
+function showVerbs(){
+  clearPH();
+  const bank = shuffle(dish.steps.map(s=>s.verb).concat(dish.extra));
+  const filled = Array(dish.steps.length).fill(null);
+  function render(){
+    app.innerHTML = `<h1>${dish.emoji} ${dish.name}</h1>
+      <h2>2️⃣ Drag the right verb to each picture!</h2>
+      <p class="tip">Match the word to the action.</p>
+      <div id="rows">${dish.steps.map((s,i)=>`
+        <div class="vrow"><span class="ic">${sceneHTML(s.scene)}</span>
+          <div class="vslot ${filled[i]?'filled':''}" data-vs="${i}">${filled[i]||'_____'}</div></div>`).join('')}</div>
+      <div class="vbank" id="bank">${bank.map(v=>`<div class="vcard vopt" data-v="${v}">${v}</div>`).join('')}</div>
+      <div class="msg" id="msg"></div>`;
+  }
+  render();
+  let ghost=null, dragV=null;
+  const moveG = e => { if(!ghost) return;
+    ghost.style.left = e.clientX+'px'; ghost.style.top = e.clientY+'px';
+    document.querySelectorAll('.vslot').forEach(s=>{ if(!s.classList.contains('filled')) s.style.borderColor='#f2b26b'; });
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const t = el && el.closest ? el.closest('.vslot') : null;
+    if(t && !t.classList.contains('filled')) t.style.borderColor = '#7ecba8'; };
+  PH.down = e => { const el = e.target.closest ? e.target.closest('.vopt') : null;
+    if(!el || el.classList.contains('used')) return;
+    e.preventDefault(); dragV = el;
+    ghost = el.cloneNode(true); ghost.classList.add('ghost');
+    ghost.style.position='fixed'; document.body.appendChild(ghost); moveG(e);
+    el.classList.add('dragging'); };
+  PH.move = moveG;
+  PH.up = e => { if(!ghost) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const t = el && el.closest ? el.closest('.vslot') : null;
+    ghost.remove(); ghost=null; dragV.classList.remove('dragging');
+    document.querySelectorAll('.vslot').forEach(s=>s.style.borderColor='');
+    if(t && !t.classList.contains('filled')){
+      const i = +t.dataset.vs;
+      if(dish.steps[i].verb === dragV.dataset.v){
+        filled[i] = dish.steps[i].verb; dragV.classList.add('used'); render();
+        if(filled.every(x=>x!==null)){
+          document.getElementById('msg').textContent = '✨ The recipe is ready! Time to cook!';
+          setTimeout(()=>showCook(0), 1000);
+        }
+      } else {
+        errors++;
+        t.classList.add('wrong');
+        document.getElementById('msg').textContent = '❌ Not this verb! Try another!';
+        setTimeout(()=>{ document.querySelectorAll('.vslot').forEach(s=>s.classList.remove('wrong'));
+          const m = document.getElementById('msg'); if(m) m.textContent=''; }, 900);
+      }
+    }
+    dragV = null; };
+}
+
+/* ---------- Этап 4: готовка ---------- */
+function showCook(idx){
+  clearPH();
+  if(idx >= dish.steps.length){ showResult(); return; }
+  const st = dish.steps[idx];
+  app.innerHTML = `<h1>${dish.emoji} ${dish.name}</h1>
+    <div class="dots">${dish.steps.map((s,i)=>`<span class="dot ${i<idx?'done':i===idx?'cur':''}"></span>`).join('')}</div>
+    <h2>Step ${idx+1} of ${dish.steps.length}: ${st.verb.toUpperCase()}!</h2>
+    <div id="zone"></div>
+    <div class="msg" id="cmsg"></div>`;
+  const zone = document.getElementById('zone'), cm = document.getElementById('cmsg');
+  const onDone = () => { cm.textContent = '✅ Good job!'; setTimeout(()=>showCook(idx+1), 700); };
+  const fail = m => { errors++; cm.textContent = m; };
+  switch(st.game){
+    case 'stir':   gameStir(zone, st.turns, st.scene, onDone); break;
+    case 'swipe':  gameSwipe(zone, st.n, st.scene, st, onDone); break;
+    case 'pour':   gamePour(zone, st.scene, st.speed, onDone, fail); break;
+    case 'hold':   gameHold(zone, st.scene, onDone, fail); break;
+    case 'flip':   gameFlip(zone, st.item, onDone, fail); break;
+    case 'shape':  gameShape(zone, st.item, st.target, onDone); break;
+    case 'toss':   gameToss(zone, st.item, st.target, onDone); break;
+    case 'catch':  gameCatch(zone, st.item, onDone); break;
+  }
+}
+
+/* ---------- Результат ---------- */
+function showResult(){
+  clearPH();
+  const final = dish.result || dish.emoji;
+  const stars = errors<=2 ? 3 : errors<=5 ? 2 : 1;
+  const phrase = stars===3 ? 'Amazing! You are a real chef! 🎉'
+               : stars===2 ? 'Great job! Almost perfect!'
+               : 'Good try! Try again!';
+  app.innerHTML = `<h1>${final} ${dish.name} is ready!</h1>
+    <div class="scene"><div class="main" style="font-size:110px">${final}</div>
+      <span class="spark">✨</span><span class="spark">⭐</span></div>
+    <div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <h2>${phrase}</h2>
+    <button class="btn p1" id="againBtn">Cook again 🔁</button>
+    <button class="btn p4" id="menuBtn">Menu 🏠</button>`;
+  for(let i=0;i<26;i++){
+    const c = document.createElement('span');
+    c.className='confetti'; c.textContent = CONFETTI[Math.floor(Math.random()*CONFETTI.length)];
+    c.style.left = Math.random()*100+'%';
+    c.style.animationDuration = (2.5+Math.random()*3)+'s';
+    c.style.animationDelay = Math.random()*2+'s';
+    app.appendChild(c);
+  }
+  document.getElementById('againBtn').onclick = () => { errors = 0; showIngredients(); };
+  document.getElementById('menuBtn').onclick = showMenu;
+}
+
+showMenu();
+</script>
+</body>
+</html>
